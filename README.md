@@ -23,3 +23,9 @@ dataDir=C:/kafka/zookeeper
 C:\kafka> .\bin\windows\kafka-server-start.bat .\config\server.properties
 
 ```
+## Starting Apache Zookeeper and Kafka Broker
+- C:\kafka:
+  - bin - starting scripts
+  - config - brocker, producer, zookeeper configs
+  - logs - log files
+  - kafka-logs - kafka messages
