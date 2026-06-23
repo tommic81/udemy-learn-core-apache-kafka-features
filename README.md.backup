@@ -47,3 +47,23 @@ C:\kafka> .\bin\windows\kafka-server-start.bat .\config\server.properties
 - run `C:\kafka\bin\windows> .\kafka-topics.bat --describe --bootstrap-server localhost:9092 --topic cities` - info about the topic configuration
 - PartitionCount: 1 - nr of partitions
 - ReplicationFactor: 1 - how many time the messages are replicated (for backup)
+
+## Producing and consuming Messages
+### Send some messages
+- run `C:\kafka\bin\windows> .\kafka-console-producer.bat --broker-list localhost:9092 --topic cities` 
+### Consume messages
+- run `.\kafka-console-consumer.bat --bootstrap-server localhost:9092 --topic cities
+### Consuming messages from the beginning
+- run `C:\kafka\bin\windows> .\kafka-console-consumer.bat --bootstrap-server localhost:9092 --topic cities --from-beginning`
+- Kafka cluster stores messages even if they were consumed
+- Same messages ,ay be read multiple times by different consumers
+### Running multiple consumers
+- Multiple consumers and multiple producers could exchange messages via single centralized storage point -kafka cluster
+### Running multiple producers
+- Producers and consumers may appear and disappear. But Kafka doesn't care about that. It's job is to store messages and receive or send them on demand.
+
+### What was changed in the Kafka logs
+- Every consumer must be part of rhe consumer group
+- Every message inside of the topic has unique number called "offset"
+- First message in each topic has offet 0
+- Cunsumers start reading messages starting from specific offset
