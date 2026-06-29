@@ -307,3 +307,171 @@ C:\kafka> .\bin\windows\kafka-topics.bat --bootstrap-server localhost:9092 --des
         Topic: __consumer_offsets       Partition: 5    Leader: 0       Replicas: 0     Isr: 0
         Topic: __consumer_offsets       Partition: 6    Leader: 0       Replicas: 0     Isr: 0
 ```
+- __consumer_offsets - commited offsets of consumers
+
+## Kafka Cluster with Multiple Brokers
+### Creating separate configuation files for brokers
+- Every broker on the same computer must have:
+  - Unique port
+  - Unique broker ID
+  - Unique log directory
+- Copy server.properties
+  - We should have : server.properties, server0.properties, server1.properties, server2.properties
+  
+- server0.properties
+```
+broker.id=0
+
+#listeners=PLAINTEXT://:9092
+
+log.dirs=C:/kafka/kafka-logs-0
+
+```  
+- server1.properties
+```
+broker.id=1
+
+listeners=PLAINTEXT://:9093
+
+log.dirs=C:/kafka/kafka-logs-1
+
+```  
+- server2.properties
+```
+broker.id=2
+
+listeners=PLAINTEXT://:9094
+
+log.dirs=C:/kafka/kafka-logs-2
+
+```  
+### Launching three brokers
+1. Run Zookeeper
+```
+C:\kafka> .\bin\windows\zookeeper-server-start.bat .\config\zookeeper.properties
+```
+
+2. Run Kafka
+
+```
+C:\kafka> .\bin\windows\kafka-server-start.bat .\config\server0.properties
+C:\kafka> .\bin\windows\kafka-server-start.bat .\config\server1.properties
+C:\kafka> .\bin\windows\kafka-server-start.bat .\config\server2.properties
+```
+
+### Getting cluster information
+1. Get information from Zookeeper about active broker Ids
+```
+C:\kafka> .\bin\windows\zookeeper-shell.bat localhost:2181 ls /brokers/ids
+
+# Connecting to localhost:2181
+
+# WATCHER::
+
+# WatchedEvent state:SyncConnected type:None path:null
+# [0, 1, 2]
+```
+2. Get information from Zookeeper about specific broker by Id
+```
+C:\kafka> .\bin\windows\zookeeper-shell.bat localhost:2181 get /brokers/ids/0
+
+# Connecting to localhost:2181
+
+# WATCHER::
+
+# WatchedEvent state:SyncConnected type:None path:null
+# {"features":{},"listener_security_protocol_map":{"PLAINTEXT":"PLAINTEXT"},"endpoints":#["PLAINTEXT://DESKTOP-MIMEIU7:9092"],"jmx_port":-1,"port":9092,"host":"DESKTOP-MIMEIU7","version":5,"timestamp":"1782722524283"}
+```
+### Creating multiple-partition topic in the Kafka cluster
+- Creating a topic
+```
+C:\kafka> .\bin\windows\kafka-topics.bat --bootstrap-server localhost:9092,localhost:9093,localhost:9094 --create --replication-factor 1 --partitions 5 --topic cars
+
+# Created topic cars.
+```
+### Producing and consuming messages in the cluster
+- Start a producer
+```
+C:\kafka> .\bin\windows\kafka-console-producer.bat --broker-list localhost:9092,localhost:9093,localhost:9094 --topic cars
+
+>BMW
+>Tesla
+>Honda
+>Audi
+```
+- Start a consumer
+```
+C:\kafka> .\bin\windows\kafka-console-consumer.bat --bootstrap-server localhost:9092,localhost:9093,localhost:9094 --topic cars --from-beginning
+
+
+# BMW
+# Tesla
+# Honda
+# Audi
+# Maserali
+```
+
+### Details about topic in the cluster
+- List all topics
+
+```
+C:\kafka> .\bin\windows\kafka-topics.bat --bootstrap-server localhost:9092,localhost:9093,localhost:9094 --list
+
+# __consumer_offsets
+# cars
+```
+
+- Topic details
+
+```
+C:\kafka> .\bin\windows\kafka-topics.bat --bootstrap-server localhost:9092,localhost:9093,localhost:9094 --describe --topic cars
+
+Topic: cars     TopicId: KvGZ2IoNQYGG6LdO7AwR1A PartitionCount: 5       ReplicationFactor: 1    Configs:
+        Topic: cars     Partition: 0    Leader: 2       Replicas: 2     Isr: 2
+        Topic: cars     Partition: 1    Leader: 1       Replicas: 1     Isr: 1
+        Topic: cars     Partition: 2    Leader: 0       Replicas: 0     Isr: 0
+        Topic: cars     Partition: 3    Leader: 2       Replicas: 2     Isr: 2
+        Topic: cars     Partition: 4    Leader: 1       Replicas: 1     Isr: 1
+```
+```
+C:\kafka> .\bin\windows\kafka-topics.bat --bootstrap-server localhost:9092,localhost:9093,localhost:9094 --describe --topic __consumer_offsets
+Topic: __consumer_offsets       TopicId: ZPPQAr3JRkGpHNCjkjZPJg PartitionCount: 50      ReplicationFactor: 1    Configs: compression.type=producer,cleanup.policy=compact,segment.bytes=104857600
+        Topic: __consumer_offsets       Partition: 0    Leader: 2       Replicas: 2     Isr: 2
+        Topic: __consumer_offsets       Partition: 1    Leader: 1       Replicas: 1     Isr: 1
+        Topic: __consumer_offsets       Partition: 2    Leader: 0       Replicas: 0     Isr: 0
+        Topic: __consumer_offsets       Partition: 3    Leader: 2       Replicas: 2     Isr: 2
+```
+### Simulating broker failure in the cluster
+1. Stop broker 2
+2. List brokers
+
+```
+PS C:\kafka> .\bin\windows\zookeeper-shell.bat localhost:2181 ls /brokers/ids
+Connecting to localhost:2181
+
+WATCHER::
+
+WatchedEvent state:SyncConnected type:None path:null
+[0, 1]
+```
+
+- Read messages again. Messages from broker 2 are not available.
+```
+C:\kafka> .\bin\windows\kafka-console-consumer.bat --bootstrap-server localhost:9092,localhost:9093,localhost:9094 --topic cars --from-beginning
+```
+- Describe topic cars
+
+```
+C:\kafka> .\bin\windows\kafka-topics.bat --bootstrap-server localhost:9092,localhost:9093,localhost:9094 --describe --topic cars
+Topic: cars     TopicId: KvGZ2IoNQYGG6LdO7AwR1A PartitionCount: 5       ReplicationFactor: 1    Configs:
+        Topic: cars     Partition: 0    Leader: none    Replicas: 2     Isr: 2
+        Topic: cars     Partition: 1    Leader: 1       Replicas: 1     Isr: 1
+        Topic: cars     Partition: 2    Leader: 0       Replicas: 0     Isr: 0
+        Topic: cars     Partition: 3    Leader: none    Replicas: 2     Isr: 2
+        Topic: cars     Partition: 4    Leader: 1       Replicas: 1     Isr: 1
+```
+
+- Start broker 2 again
+```
+C:\kafka> .\bin\windows\kafka-server-start.bat .\config\server2.properties
+```
