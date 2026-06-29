@@ -142,3 +142,168 @@ C:\kafka> .\bin\windows\kafka-server-start.bat .\config\server.properties
 - We can read from the beginning or some offset or a current state
 - Can be multiple consumers reading from one topic. They will belong to some consumer group. Only one consumer in a group reads the messages. 
 - Reading messages by the consumers belonging to one group does not affect consumers belonging to another group 
+
+## GitHub Repository and Diagrams
+- [Apache Kafka Course - github](https://github.com/bstashchuk/apache-kafka-course)
+- Basic commands
+```bash
+Basic KAFKA Commands
+
+START ZOOKEEPER
+bin/zookeeper-server-start.sh config/zookeeper.properties
+
+START KAFKA BROKER
+bin/kafka-server-start.sh config/server.properties
+
+CREATE TOPIC
+bin/kafka-topics.sh \
+--bootstrap-server localhost:9092 \
+--create \
+--replication-factor 1 \
+--partitions 3 \
+--topic test
+
+LIST TOPICS
+bin/kafka-topics.sh \
+--bootstrap-server localhost:9092 \
+--list
+
+TOPIC DETAILS
+bin/kafka-topics.sh \
+--bootstrap-server localhost:9092 \
+--describe \
+--topic test
+
+START CONSOLE PRODUCER
+bin/kafka-console-producer.sh \
+--broker-list localhost:9092 \
+--topic test
+
+START CONSOLE CONSUMER
+bin/kafka-console-consumer.sh \
+--bootstrap-server localhost:9092 \
+--topic test
+
+START CONSOLE CONSUMER AND READ MESSAGES FROM BEGINNING
+bin/kafka-console-consumer.sh \
+--bootstrap-server localhost:9092 \
+--topic test \
+--from-beginning
+
+START CONSOLE CONSUMER WITH SPECIFIC CONSUMER GROUP
+bin/kafka-console-consumer.sh \
+--bootstrap-server localhost:9092 \
+--topic test \
+--group test \
+--from-beginning
+
+LIST CONSUMER GROUPS
+bin/kafka-consumer-groups.sh \
+--bootstrap-server localhost:9092 \
+--list
+
+CONSUMER GROUP DETAILS
+bin/kafka-consumer-groups.sh \
+--bootstrap-server localhost:9092 \
+--group test \
+--describe
+
+```
+## Example 1 - Topic with Multiple Partitions
+### If you use remote Kafka brokers
+In case you use Kafka brokers and zookeeper remotely on any of the hosting services like Amazon EC2, Google Cloud or Digitalocean and want to connect to it from your local computer (produce or consume messages) you need to do following:
+
+1. On hosting service firewall allow remote access and open ports 2181 (Zookeeper) and 9092 (Broker)
+
+2. In the configuration file for each broker you need to adjust  advertised.listeners and set it either to DNS name or public IP address of the server where broker is hosted.
+
+Examples
+```
+advertised.listeners=PLAINTEXT://186.23.16.1:9092
+advertised.listeners=PLAINTEXT://ec2-54-123-123-123.compute-1.amazonaws.com:9092
+```
+Don't forget to uncomment this line in the configuration file!
+
+If you use only one broker with default configuration file server.properties, do this adjustment in it. If you use multiple brokers in the cluster with multiple configuration files, make this adjustment in each of the custom configuration files.
+
+### Cleaning up existing Kafka installation
+1. Run Zookeeper
+
+```
+C:\kafka> .\bin\windows\zookeeper-server-start.bat .\config\zookeeper.properties
+```
+
+2. Run Kafka
+
+```
+C:\kafka> .\bin\windows\kafka-server-start.bat .\config\server.properties
+```
+
+3. Create a Topic
+
+```
+C:\kafka> .\bin\windows\kafka-topics.bat --bootstrap-server localhost:9092 --create --replication-factor 1  --partitions 3 --topic animals
+```
+4. Start console producer
+```
+C:\kafka> .\bin\windows\kafka-console-producer.bat --broker-list localhost:9092 --topic animals
+cat
+dog 
+monkey
+```
+5. Start console consumer
+
+```
+C:\kafka> .\bin\windows\kafka-console-consumer.bat --bootstrap-server localhost:9092 --topic animals --from-beginning
+```
+### How messages were spread
+- Messages are not consumed in an order of adding
+- Every offset number must be unique across partition 
+- Partitions: animals-0, animals-1, animals-2
+- Distribution of messages is not done in a specic order
+
+### Reading from a specific partition
+```
+C:\kafka> .\bin\windows\kafka-console-consumer.bat --bootstrap-server localhost:9092 --partition 1 --topic animals --from-beginning
+```
+### Reading from a specific offset
+```
+C:\kafka> .\bin\windows\kafka-console-consumer.bat --bootstrap-server localhost:9092 --topic animals --partition 2 --offset 3
+```
+- It is not possible to read from specific offset across entire topic. You must specify partition along with offset.
+
+
+### Reading details about topic and __consumer_offsers topic
+```
+# LIST TOPICS
+C:\kafka> .\bin\windows\kafka-topics.bat --bootstrap-server localhost:9092 --list
+
+# __consumer_offsets - system topic
+# custom topics
+# animals 
+# cities
+
+# TOPIC DETAILS
+C:\kafka> .\bin\windows\kafka-topics.bat --bootstrap-server localhost:9092 --describe --topic animals
+
+# Topic: animals  TopicId: VZRvfduITv64jANbeN-9sg PartitionCount: 3  
+# ReplicationFactor: 1    Configs:
+#       Topic: animals  Partition: 0    Leader: 0       Replicas: 0     Isr: 0
+#       Topic: animals  Partition: 1    Leader: 0       Replicas: 0     Isr: 0
+#       Topic: animals  Partition: 2    Leader: 0       Replicas: 0     Isr: 0
+``` 
+- segment - sing file that stores messages
+- Isr - id of a broker
+
+```
+C:\kafka> .\bin\windows\kafka-topics.bat --bootstrap-server localhost:9092 --describe --topic __consumer_offsets
+
+# Topic: __consumer_offsets       TopicId: IRdkj7p3RoavZq4pndHl_A PartitionCount: 50      # ReplicationFactor: 1    Configs: # compression.type=producer,cleanup.policy=compact,segment.bytes=104857600
+        Topic: __consumer_offsets       Partition: 0    Leader: 0       Replicas: 0     Isr: 0
+        Topic: __consumer_offsets       Partition: 1    Leader: 0       Replicas: 0     Isr: 0
+        Topic: __consumer_offsets       Partition: 2    Leader: 0       Replicas: 0     Isr: 0
+        Topic: __consumer_offsets       Partition: 3    Leader: 0       Replicas: 0     Isr: 0
+        Topic: __consumer_offsets       Partition: 4    Leader: 0       Replicas: 0     Isr: 0
+        Topic: __consumer_offsets       Partition: 5    Leader: 0       Replicas: 0     Isr: 0
+        Topic: __consumer_offsets       Partition: 6    Leader: 0       Replicas: 0     Isr: 0
+```
