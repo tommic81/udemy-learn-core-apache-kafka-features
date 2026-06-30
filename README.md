@@ -475,5 +475,64 @@ Topic: cars     TopicId: KvGZ2IoNQYGG6LdO7AwR1A PartitionCount: 5       Replicat
 ```
 C:\kafka> .\bin\windows\kafka-server-start.bat .\config\server2.properties
 ```
+## Multiple Brokers and Topic with Replication
+### Prepare for nex example
+- Remove Kafka and Zookeeper logs
+- Copy server0.properties, server1.properties,server2.properties from git project `apache-kafka-course-master\EXAMPLES\03 Multiple Brokers and Replication\config`
 
-## 
+### Launching brokers and creating topics with replication
+- Start Zookeeper
+- Start Brokers
+- Verify
+
+```
+C:\kafka> .\bin\windows\zookeeper-shell.bat localhost:2181 ls /brokers/ids
+```
+- Create a Topic
+```
+C:\kafka> .\bin\windows\kafka-topics.bat --bootstrap-server localhost:9092,localhost:9093,localhost:9094 --create --replication-factor 3 --partitions 7 --topic months
+
+# Created topic months.
+```
+- Only **Leader** broker in the partition serves producers and consumers
+- List topics
+```
+C:\kafka> .\bin\windows\kafka-topics.bat --bootstrap-server localhost:9092,localhost:9093,localhost:9094 --list
+```
+
+- Describe topics
+```
+C:\kafka> .\bin\windows\kafka-topics.bat --bootstrap-server localhost:9092,localhost:9093,localhost:9094 --describe --topic months
+
+Topic: months   TopicId: Zm_P_gFwQqibpWCBgMh7JA PartitionCount: 7       ReplicationFactor: 3    Configs: segment.bytes=1073741824
+        Topic: months   Partition: 0    Leader: 2       Replicas: 2,1,0 Isr: 2,1,0
+        Topic: months   Partition: 1    Leader: 1       Replicas: 1,0,2 Isr: 1,2,0
+        Topic: months   Partition: 2    Leader: 0       Replicas: 0,2,1 Isr: 2,1,0
+        Topic: months   Partition: 3    Leader: 2       Replicas: 2,0,1 Isr: 2,1,0
+        Topic: months   Partition: 4    Leader: 1       Replicas: 1,2,0 Isr: 1,2,0
+        Topic: months   Partition: 5    Leader: 0       Replicas: 0,1,2 Isr: 1,2,0
+        Topic: months   Partition: 6    Leader: 2       Replicas: 2,1,0 Isr: 2,1,0
+```
+- Start a consumer
+```
+C:\kafka> .\bin\windows\kafka-console-consumer.bat --bootstrap-server localhost:9092,localhost:9093,localhost:9094 --topic months --from-beginning
+```
+- Start a producer
+```
+C:\kafka> .\bin\windows\kafka-console-producer.bat --broker-list localhost:9092,localhost:9093,localhost:9094 --topic months
+```
+- Read from a specific partition
+
+```
+C:\kafka> .\bin\windows\kafka-console-consumer.bat --bootstrap-server localhost:9092,localhost:9093,localhost:9094 --topic months --partition 3 --from-beginning
+```
+- Read from a specific partition and offset
+
+```
+C:\kafka> .\bin\windows\kafka-console-consumer.bat --bootstrap-server localhost:9092,localhost:9093,localhost:9094 --topic months --partition 4 --offset 2
+```
+
+### Observing how messages were stored in the partitions on different brokers
+- Contenst of any patitions are the same on every broker due to the replication
+- After joining/shutdown of a broker, a new leader is elected
+- 
