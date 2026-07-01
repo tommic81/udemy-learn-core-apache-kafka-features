@@ -535,4 +535,157 @@ C:\kafka> .\bin\windows\kafka-console-consumer.bat --bootstrap-server localhost:
 ### Observing how messages were stored in the partitions on different brokers
 - Contenst of any patitions are the same on every broker due to the replication
 - After joining/shutdown of a broker, a new leader is elected
-- 
+
+## Kafka Consumer Groups
+- Every consumer must belong to any consumer group. If you do not specify your custom group, it will be created automatically
+
+### Exploring default consumer groups
+1. Start Zookeeper.
+```
+C:\kafka> .\bin\windows\zookeeper-server-start.bat .\config\zookeeper.properties
+```
+2. Start a single broker
+
+```
+C:\kafka> .\bin\windows\kafka-server-start.bat .\config\server.properties
+```
+3. Create a topic **numbers**
+```
+C:\kafka> .\bin\windows\kafka-topics.bat --bootstrap-server localhost:9092 --create --replication-factor 1 --partitions 5 --topic numbers
+```
+4. List the topics.
+```
+C:\kafka> .\bin\windows\kafka-topics.bat --bootstrap-server localhost:9092 --list
+```
+5. Start a consumer without consumer group.
+```
+C:\kafka> .\bin\windows\kafka-console-consumer.bat --bootstrap-server localhost:9092 --topic numbers
+```
+6. Start a producer
+```
+C:\kafka> .\bin\windows\kafka-console-producer.bat --broker-list localhost:9092 --topic numbers
+
+>1
+>2
+>3
+```
+7. List consumer groups
+
+```
+C:\kafka> .\bin\windows\kafka-consumer-groups.bat --bootstrap-server localhost:9092 --list
+console-consumer-35304
+```
+8. Run another consumer
+9. List consumer groups
+```
+# 2 groups are created
+console-consumer-23615
+console-consumer-35304
+```
+- groups are created to reduce the load on counsumers
+- single consumer may not be able to consume all produced messages at the same high rates
+- messages will be spread among different consumers
+10. Details of the consumer group
+```
+C:\kafka> .\bin\windows\kafka-consumer-groups.bat --bootstrap-server localhost:9092 --group console-consumer-23615 --describe
+
+GROUP                  TOPIC           PARTITION  CURRENT-OFFSET  LOG-END-OFFSET  LAG             CONSUMER-ID                                           HOST            CLIENT-ID
+console-consumer-23615 numbers         0          -               0               -               console-consumer-7fe332b3-5f44-4645-a83d-b9a570efeb57 /192.168.100.10 console-consumer
+console-consumer-23615 numbers         3          -               0               -               console-consumer-7fe332b3-5f44-4645-a83d-b9a570efeb57 /192.168.100.10 console-consumer
+console-consumer-23615 numbers         4          -               5               -               console-consumer-7fe332b3-5f44-4645-a83d-b9a570efeb57 /192.168.100.10 console-consumer
+console-consumer-23615 numbers         1          -               0               -               console-consumer-7fe332b3-5f44-4645-a83d-b9a570efeb57 /192.168.100.10 console-consumer
+console-consumer-23615 numbers         2          -               0               -               console-consumer-7fe332b3-5f44-4645-a83d-b9a570efeb57 /192.168.100.10 console-consumer
+```
+11. Stop both consumers
+12. List consumer groups
+
+```
+C:\kafka> .\bin\windows\kafka-consumer-groups.bat --bootstrap-server localhost:9092 --list
+
+console-consumer-23615
+console-consumer-35304
+
+```
+- Consumer group is automatically deleted when the last commited offset for the group expires (offsets.retention.minutes - default 24 hours)
+
+### Starting consumer in the custom consumer group
+1. Start a new consume rwith a custom customer group
+
+```
+C:\kafka> .\bin\windows\kafka-console-consumer.bat --bootstrap-server localhost:9092 --topic numbers --group nums --from-beginning
+```
+2. List customr groups
+
+```
+C:\kafka> .\bin\windows\kafka-consumer-groups.bat --bootstrap-server localhost:9092 --list
+numbers-group
+```
+3. Read the details about the group
+
+```
+C:\kafka> .\bin\windows\kafka-consumer-groups.bat --bootstrap-server localhost:9092 --group nums --describe
+
+GROUP           TOPIC           PARTITION  CURRENT-OFFSET  LOG-END-OFFSET  LAG             CONSUMER-ID                                           HOST            CLIENT-ID
+nums            numbers         0          0               0               0               console-consumer-de5d55e6-89c6-4a21-bf87-a318098d4016 /192.168.100.10 console-consumer
+nums            numbers         3          0               0               0               console-consumer-de5d55e6-89c6-4a21-bf87-a318098d4016 /192.168.100.10 console-consumer
+nums            numbers         4          5               5               0               console-consumer-de5d55e6-89c6-4a21-bf87-a318098d4016 /192.168.100.10 console-consumer
+nums            numbers         1          0               0               0               console-consumer-de5d55e6-89c6-4a21-bf87-a318098d4016 /192.168.100.10 console-consumer
+nums            numbers         2          0               0               0               console-consumer-de5d55e6-89c6-4a21-bf87-a318098d4016 /192.168.100.10 console-consumer
+```
+- LAG is non zero when a customem has not finished reading all the messages in the partition
+
+### Starting a second consumer in the same consumer group
+
+```
+C:\kafka> .\bin\windows\kafka-console-consumer.bat --bootstrap-server localhost:9092 --topic numbers --group nums --from-beginning
+
+```
+- No messages are read as previous customer (from the same group) has already read everything
+- Describe again:
+
+```
+C:\kafka> .\bin\windows\kafka-consumer-groups.bat --bootstrap-server localhost:9092 --group nums --describe
+
+GROUP           TOPIC           PARTITION  CURRENT-OFFSET  LOG-END-OFFSET  LAG             CONSUMER-ID                                           HOST            CLIENT-ID
+nums            numbers         0          0               0               0               console-consumer-3504784a-3133-4fd8-acac-da18e5f4f862 /192.168.100.10 console-consumer
+nums            numbers         1          0               0               0               console-consumer-3504784a-3133-4fd8-acac-da18e5f4f862 /192.168.100.10 console-consumer
+nums            numbers         2          0               0               0               console-consumer-3504784a-3133-4fd8-acac-da18e5f4f862 /192.168.100.10 console-consumer
+nums            numbers         3          0               0               0               console-consumer-b3626c0f-cd21-4598-af23-071a49884e1a /192.168.100.10 console-consumer
+nums            numbers         4          6               6               0               console-consumer-b3626c0f-cd21-4598-af23-071a49884e1a /192.168.100.10 console-consumer
+```
+
+### Starting one more consumer in the same consumer group
+```
+C:\kafka> .\bin\windows\kafka-console-consumer.bat --bootstrap-server localhost:9092 --topic numbers --group nums --from-beginning
+```
+- Describe again:
+```
+PS C:\kafka> .\bin\windows\kafka-consumer-groups.bat --bootstrap-server localhost:9092 --group nums --describe
+
+GROUP           TOPIC           PARTITION  CURRENT-OFFSET  LOG-END-OFFSET  LAG             CONSUMER-ID                                           HOST            CLIENT-ID
+nums            numbers         0          4               4               0               console-consumer-3504784a-3133-4fd8-acac-da18e5f4f862 /192.168.100.10 console-consumer
+nums            numbers         1          0               0               0               console-consumer-3504784a-3133-4fd8-acac-da18e5f4f862 /192.168.100.10 console-consumer
+nums            numbers         2          0               0               0               console-consumer-b3626c0f-cd21-4598-af23-071a49884e1a /192.168.100.10 console-consumer
+nums            numbers         3          0               0               0               console-consumer-b3626c0f-cd21-4598-af23-071a49884e1a /192.168.100.10 console-consumer
+nums            numbers         4          6               6               0               console-consumer-bf4f0d23-75ca-4d0b-b466-a1ac7c14eb2b /192.168.100.10 console-consumer
+```
+- three different consumer ids
+
+### Idle cunsumers in the group
+- Run 3 more consumers
+```
+C:\kafka> .\bin\windows\kafka-console-consumer.bat --bootstrap-server localhost:9092 --topic numbers --group nums --from-beginning
+```
+- Describe
+```
+PS C:\kafka> .\bin\windows\kafka-consumer-groups.bat --bootstrap-server localhost:9092 --group nums --describe
+
+GROUP           TOPIC           PARTITION  CURRENT-OFFSET  LOG-END-OFFSET  LAG             CONSUMER-ID                                           HOST            CLIENT-ID
+nums            numbers         0          7               7               0               console-consumer-3504784a-3133-4fd8-acac-da18e5f4f862 /192.168.100.10 console-consumer
+nums            numbers         3          0               0               0               console-consumer-9714bbee-3dc9-40cb-b292-6ec4df227cd8 /192.168.100.10 console-consumer
+nums            numbers         2          0               0               0               console-consumer-783b8c08-2151-4ea1-9176-523990973dc2 /192.168.100.10 console-consumer
+nums            numbers         4          6               6               0               console-consumer-b3626c0f-cd21-4598-af23-071a49884e1a /192.168.100.10 console-consumer
+nums            numbers         1          0               0               0               console-consumer-6a4c9897-2980-47e3-9127-f5d4903defba /192.168.100.10 console-consumer
+```
+- One consumer is idle
+- If thre are 3 partitions in the topic and 100 consumers in the group then 97 consumers will be idle and only 3 of 100 will be assigned to partitions
