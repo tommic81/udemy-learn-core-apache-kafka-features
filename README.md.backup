@@ -688,4 +688,126 @@ nums            numbers         4          6               6               0    
 nums            numbers         1          0               0               0               console-consumer-6a4c9897-2980-47e3-9127-f5d4903defba /192.168.100.10 console-consumer
 ```
 - One consumer is idle
-- If thre are 3 pa
+- If thre are 3 partitions in the topic and 100 consumers in the group then 97 consumers will be idle and only 3 of 100 will be assigned to partitions
+
+## Performance testing
+- "Lagging" - messages are produced faster than consumers can cunsume them
+- Use config files from: `apache-kafka-course-master\EXAMPLES\05 Performance Testing\config` 
+
+### Starting cluster and launching basic performance test
+1. Start Zookeeper and the cluster
+```
+C:\kafka> .\bin\windows\zookeeper-server-start.bat .\config\zookeeper.properties
+
+C:\kafka> .\bin\windows\kafka-server-start.bat .\config\server0.properties
+
+C:\kafka> .\bin\windows\kafka-server-start.bat .\config\server1.properties
+
+C:\kafka> .\bin\windows\kafka-server-start.bat .\config\server2.properties
+```
+2. Create a topic
+
+```
+C:\kafka> .\bin\windows\kafka-topics.bat --bootstrap-server localhost:9092 --create --replication-factor 3 --partitions 100 --topic perf
+
+Created topic perf.
+```
+3. Start a consumer
+
+```
+C:\kafka> .\bin\windows\kafka-console-consumer.bat --bootstrap-server localhost:9092 --topic perf
+
+```
+4. Start producer performance test
+```
+C:\kafka> .\bin\windows\kafka-producer-perf-test.bat --topic perf --num-records 1000 --throughput 100 --record-size 1000 --producer-props  bootstrap.servers=localhost:9092
+
+501 records sent, 100,1 records/sec (0,10 MB/sec), 2,7 ms avg latency, 226,0 ms max latency.
+1000 records sent, 99,990001 records/sec (0,10 MB/sec), 1,88 ms avg latency, 226,00 ms max latency, 1 ms 50th, 2 ms 95th, 21 ms 99th, 226 ms 99.9th.
+```
+- **num-record** - how many messages in total
+- **throughput** - how many msgs per sec will be produced
+- **record-size** - size of every message in bytes
+- **producer-props** - list of properties
+
+### Increasing performance test parameters
+1. Run performance test again
+```
+C:\kafka> .\bin\windows\kafka-producer-perf-test.bat --topic perf --num-records 10000 --throughput 1000 --record-size 1000 --producer-props  bootstrap.servers=localhost:9092
+
+4995 records sent, 997,6 records/sec (0,95 MB/sec), 1,9 ms avg latency, 237,0 ms max latency.
+10000 records sent, 999,500250 records/sec (0,95 MB/sec), 1,37 ms avg latency, 237,00 ms max latency, 1 ms 50th, 2 ms 95th, 17 ms 99th, 21 ms 99.9th.
+```
+2. Change parameters and run the test
+
+```
+C:\kafka> .\bin\windows\kafka-producer-perf-test.bat --topic perf --num-records 100000 --throughput 10000 --record-size 1000 --producer-props  bootstrap.servers=localhost:9092
+
+49922 records sent, 9972,4 records/sec (9,51 MB/sec), 2,6 ms avg latency, 230,0 ms max latency.
+50020 records sent, 10004,0 records/sec (9,54 MB/sec), 0,8 ms avg latency, 11,0 ms max latency.
+100000 records sent, 9986,019573 records/sec (9,52 MB/sec), 1,66 ms avg latency, 230,00 ms max latency, 1 ms 50th, 3 ms 95th, 30 ms 99th, 39 ms 99.9th.
+```
+
+### Testing consumer performance
+1. Run Kafka consumer test
+```
+C:\kafka> .\bin\windows\kafka-consumer-perf-test.bat --broker-list localhost:9092 --topic perf --messages 10000
+
+start.time, end.time, data.consumed.in.MB, MB.sec, data.consumed.in.nMsg, nMsg.sec, rebalance.time.ms, fetch.time.ms, fetch.MB.sec, fetch.nMsg.sec
+2026-07-01 11:28:04:562, 2026-07-01 11:28:05:084, 9,5367, 18,2696, 10000, 19157,0881, 1782898084864, -1782898084342, -0,0000, -0,0000
+```
+2. Run again for more messages
+```
+C:\kafka> .\bin\windows\kafka-consumer-perf-test.bat --broker-list localhost:9092 --topic perf --messages 100000
+
+start.time, end.time, data.consumed.in.MB, MB.sec, data.consumed.in.nMsg, nMsg.sec, rebalance.time.ms, fetch.time.ms, fetch.MB.sec, fetch.nMsg.sec
+2026-07-01 11:29:39:209, 2026-07-01 11:29:39:769, 95,6316, 170,7707, 100277, 179066,0714, 1782898179448, -1782898178888, -0,0000, -0,0001
+```
+- If consumer consumes slowly than producers produce there will be **LAG** between offsets.
+### Getting non-zero LAG
+1. Stop the consumer
+2. Create a new topic
+```
+C:\kafka> .\bin\windows\kafka-topics.bat --bootstrap-server localhost:9092 --create --replication-factor 3 --partitions 3 --topic perf2
+
+Created topic perf2.
+```
+3. Start 2 consumers in a specific group
+```
+C:\kafka> .\bin\windows\kafka-console-consumer.bat --bootstrap-server localhost:9092 --topic perf2 --group perf --from-beginning
+```
+4. Read details about consumer group
+```
+C:\kafka> .\bin\windows\kafka-consumer-groups.bat --bootstrap-server localhost:9092 --group perf --describe
+
+GROUP           TOPIC           PARTITION  CURRENT-OFFSET  LOG-END-OFFSET  LAG             CONSUMER-ID                                          HOST            CLIENT-ID
+perf            perf2           0          0               0               0               consumer-perf-1-33b25b0c-e26d-4b88-881d-698a63beeddf /192.168.100.10 consumer-perf-1
+perf            perf2           1          0               0               0               consumer-perf-1-33b25b0c-e26d-4b88-881d-698a63beeddf /192.168.100.10 consumer-perf-1
+perf            perf2           2          0               0               0               consumer-perf-1-94c420ba-f670-49ca-8d19-4873425814d0 /192.168.100.10 consumer-perf-1
+```
+5. Run producer performance test
+```
+C:\kafka> .\bin\windows\kafka-producer-perf-test.bat --topic perf2 --num-records 1000 --throughput 10 --record-size 100000 --producer-props  bootstrap.servers=localhost:9092
+
+52 records sent, 10,3 records/sec (0,98 MB/sec), 7,8 ms avg latency, 204,0 ms max latency.
+51 records sent, 10,0 records/sec (0,95 MB/sec), 2,3 ms avg latency, 4,0 ms max latency.
+51 records sent, 10,0 records/sec (0,95 MB/sec), 1,9 ms avg latency, 4,0 ms max latency.
+51 records sent, 10,0 records/sec (0,95 MB/sec), 2,1 ms avg latency, 4,0 ms max latency.
+```
+6. Read details about consumer group
+```
+C:\kafka> .\bin\windows\kafka-consumer-groups.bat --bootstrap-server localhost:9092 --group perf --describe
+
+GROUP           TOPIC           PARTITION  CURRENT-OFFSET  LOG-END-OFFSET  LAG             CONSUMER-ID                                          HOST            CLIENT-ID
+perf            perf2           0          45              61              16              consumer-perf-1-33b25b0c-e26d-4b88-881d-698a63beeddf /192.168.100.10 consumer-perf-1
+perf            perf2           1          39              56              17              consumer-perf-1-33b25b0c-e26d-4b88-881d-698a63beeddf /192.168.100.10 consumer-perf-1
+perf            perf2           2          32              47              15              consumer-perf-1-94c420ba-f670-49ca-8d19-4873425814d0 /192.168.100.10 consumer-perf-1
+
+C:\kafka> .\bin\windows\kafka-consumer-groups.bat --bootstrap-server localhost:9092 --group perf --describe
+
+GROUP           TOPIC           PARTITION  CURRENT-OFFSET  LOG-END-OFFSET  LAG             CONSUMER-ID                                          HOST            CLIENT-ID
+perf            perf2           0          220             229             9               consumer-perf-1-33b25b0c-e26d-4b88-881d-698a63beeddf /192.168.100.10 consumer-perf-1
+perf            perf2           1          209             218             9               consumer-perf-1-33b25b0c-e26d-4b88-881d-698a63beeddf /192.168.100.10 consumer-perf-1
+perf            perf2           2          188             195             7               consumer-perf-1-94c420ba-f670-49ca-8d19-4873425814d0 /192.168.100.10 consumer-perf-1
+```
+- LOG-END-OFFSET - CURRENT-OFFSET = LAG
