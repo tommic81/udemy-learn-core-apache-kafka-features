@@ -838,3 +838,54 @@ Don't forget to uncomment this line in the configuration file!
 If you use only one broker with default configuration file **server.properties**, do this adjustment in it. If you use multiple brokers in the cluster with multiple configuration files, make this adjustment in each of the custom configuration files.
 
 ### Creating a new Maven project
+```xml
+ <groupId>com.stashchuk</groupId>
+ <artifactId>Kafka</artifactId>
+ <version>1.0-SNAPSHOT</version>
+
+ <properties>
+ 	<maven.compiler.source>11</maven.compiler.source>
+ 	<maven.compiler.target>11</maven.compiler.target>
+ 	<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+ </properties>
+```
+
+### Starting Kafka Cluster
+1. Start 3 brokers
+- Clean Kafka intallation
+- Copy config files from **\apache-kafka-course-master\EXAMPLES\02 Multiple Brokers**
+- Run Zookeeper and Brokers
+```
+C:\kafka> .\bin\windows\zookeeper-server-start.bat .\config\zookeeper.properties
+
+C:\kafka> .\bin\windows\kafka-server-start.bat .\config\server0.properties
+
+C:\kafka> .\bin\windows\kafka-server-start.bat .\config\server1.properties
+
+C:\kafka> .\bin\windows\kafka-server-start.bat .\config\server2.properties
+
+```
+
+### Creating Java Producer
+- [Kafka Documentation](https://kafka.apache.org/34/)
+- [Producer API](https://kafka.apache.org/34/apis/#producer-api)
+- [Kafka Producer Config](https://kafka.apache.org/34/configuration/producer-configs/)
+- [KafkaProducer](https://kafka.apache.org/34/javadoc/org/apache/kafka/clients/producer/KafkaProducer.html)
+- Dependency:
+```xml
+	<dependency>
+		<groupId>org.apache.kafka</groupId>
+		<artifactId>kafka-clients</artifactId>
+		<version>3.4.0</version>
+	</dependency>
+
+```
+- Java implementation
+```java
+ Properties props = new Properties();
+ props.put("bootstrap.servers", "localhost:9092");
+ props.put("linger.ms", 1);
+ props.put("key.serializer", "org.apache.kafka.common.serialization.StringSerializer");
+ props.put("value.serializer", "org.apache.kafka.common.serialization.StringSerializer");
+```
+- Messages are stored in the brokers as sequences of bytes. That is why we need to specify Serializers on Producers and Deserializers on Consumers in order to correctly encode/decode message keys and values.
