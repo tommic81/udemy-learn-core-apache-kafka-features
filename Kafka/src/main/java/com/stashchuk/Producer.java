@@ -17,6 +17,7 @@ public class Producer {
 
         int numOfRecords = 100;
         for (int i = 0; i < numOfRecords; i++) {
+            System.out.println("Message " + i + " was just sent");
             producer.send(new ProducerRecord<>("numbers", Integer.toString(i), Integer.toString(i)));
         }
 

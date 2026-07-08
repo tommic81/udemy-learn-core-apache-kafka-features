@@ -888,4 +888,17 @@ C:\kafka> .\bin\windows\kafka-server-start.bat .\config\server2.properties
  props.put("key.serializer", "org.apache.kafka.common.serialization.StringSerializer");
  props.put("value.serializer", "org.apache.kafka.common.serialization.StringSerializer");
 ```
-- Messages are stored in the brokers as sequences of bytes. That is why we need to specify Serializers on Producers and Deserializers on Consumers in order to correctly encode/decode message keys an
+- Messages are stored in the brokers as sequences of bytes. That is why we need to specify Serializers on Producers and Deserializers on Consumers in order to correctly encode/decode message keys and values.
+
+### Start a Producer
+- Create a topic
+
+```
+C:\kafka> .\bin\windows\kafka-topics.bat --bootstrap-server localhost:9092, localhost:9093, localhost:9094 --create --replication-factor 3 --partitions 5 --topic numbers
+
+C:\kafka> .\bin\windows\kafka-topics.bat --bootstrap-server localhost:9092,localhost:9093,localhost:9094 --list
+
+C:\kafka> .\bin\windows\kafka-console-consumer.bat --bootstrap-server localhost:9092,localhost:9093,localhost:9094 \
+--topic cars
+
+```
