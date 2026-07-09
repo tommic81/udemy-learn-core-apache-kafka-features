@@ -1000,3 +1000,20 @@ KafkaConsumer<String, String> consumer = new KafkaConsumer<>(props);
 
 consumer.assign(Arrays.asList(partitions));
 ```
+
+### Launching multiple consumers in the same consumer group
+
+- Set **Allow multiple instances** - in **Run Configurations**
+- Run multiple instances of `ConsumerWithAutoCommit`
+- 
+
+```
+C:\kafka> .\bin\windows\kafka-consumer-groups.bat --bootstrap-server localhost:9092 --group first-group --describe
+
+GROUP           TOPIC           PARTITION  CURRENT-OFFSET  LOG-END-OFFSET  LAG             CONSUMER-ID                                                 HOST            CLIENT-ID
+first-group     numbers         0          126             126             0               consumer-first-group-1-24f74b26-3bc7-419f-95b6-24cb57d72b38 /192.168.100.10 consumer-first-group-1
+first-group     numbers         1          131             131             0               consumer-first-group-1-24f74b26-3bc7-419f-95b6-24cb57d72b38 /192.168.100.10 consumer-first-group-1
+first-group     numbers         2          130             130             0               consumer-first-group-1-a2fcf1ce-c8f9-4ab7-9f9b-4807ac0efb54 /192.168.100.10 consumer-first-group-1
+first-group     numbers         3          204             204             0               consumer-first-group-1-a2fcf1ce-c8f9-4ab7-9f9b-4807ac0efb54 /192.168.100.10 consumer-first-group-1
+first-group     numbers         4          109             109             0               consumer-first-group-1-ff58c36b-0d04-4a99-a1f0-1ba1799ee919 /192.168.100.10 consumer-first-group-1
+```

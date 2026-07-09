@@ -983,3 +983,30 @@ while (true) {
 ```
 ### Consumer with Partitions Assignment
 
+```
+TopicPartition partitions[] = {
+                new TopicPartition(topic, 2),
+                new TopicPartition(topic,4)
+        };
+
+        KafkaConsumer<String, String> consumer = new KafkaConsumer<>(props);
+
+consumer.assign(Arrays.asList(partitions));  TopicPartition partitions[] = {
+                new TopicPartition(topic, 2),
+                new TopicPartition(topic,4)
+        };
+
+KafkaConsumer<String, String> consumer = new KafkaConsumer<>(props);
+
+consumer.assign(Arrays.asList(partitions));
+```
+
+### Launching multiple consumers in the same consumer group
+
+- Set **Allow multiple instances** - in **Run Configurations**
+- Run multiple instances of `ConsumerWithAutoCommit`
+- 
+
+```
+C:\kafka> .\bin\windows\kafka-consumer-groups.bat --bootstrap-server localhost:9092 --group first-group --describe
+```
