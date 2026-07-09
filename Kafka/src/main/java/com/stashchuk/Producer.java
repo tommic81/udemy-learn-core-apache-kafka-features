@@ -11,6 +11,7 @@ public class Producer {
         Properties props = new Properties();
 
         props.put("bootstrap.servers", "localhost:9092, localhost:9093, localhost:9094");
+
         props.put("key.serializer", "org.apache.kafka.common.serialization.StringSerializer");
         props.put("value.serializer", "org.apache.kafka.common.serialization.StringSerializer");
         props.put("acks", "all");
@@ -18,9 +19,17 @@ public class Producer {
 
         KafkaProducer<String, String> producer = new KafkaProducer<>(props);
 
-        String topic = "strings";
+        String topic = "numbers";
         int numOfRecords = 100;
-        try {
+        // EXAMPLE 1 - Numbers as strings for key and value without any delay
+        for (int i = 0; i < numOfRecords; i++) {
+            System.out.println("Message " + i + " was just sent");
+            producer.send(new ProducerRecord<>(topic, Integer.toString(i), Integer.toString(i)));
+        }
+        producer.close();
+
+        // EXAMPLE 2 - Formatted string as message and messages are sent with 300ms delay (3 messages / second)
+   /*     try {
 
 
             for (int i = 0; i < numOfRecords; i++) {
@@ -33,6 +42,6 @@ public class Producer {
             throw new RuntimeException(e);
         } finally {
             producer.close();
-        }
+        }*/
     }
 }

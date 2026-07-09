@@ -945,3 +945,8 @@ C:\kafka> .\bin\windows\kafka-topics.bat --bootstrap-server localhost:9092, loca
                 Thread.sleep(300);
             }
 ```
+
+### Creating consumer with autocommitting
+- [KafkaConsumer](https://kafka.apache.org/34/javadoc/org/apache/kafka/clients/consumer/KafkaConsumer.html)
+- On the consumer yoyu could either enable auto-commiting or use manual offsets commiting
+- Consumers must use corresponding deserializers to correctly read messages produced by producers
