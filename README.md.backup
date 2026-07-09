@@ -949,4 +949,16 @@ C:\kafka> .\bin\windows\kafka-topics.bat --bootstrap-server localhost:9092, loca
 ### Creating consumer with autocommitting
 - [KafkaConsumer](https://kafka.apache.org/34/javadoc/org/apache/kafka/clients/consumer/KafkaConsumer.html)
 - On the consumer yoyu could either enable auto-commiting or use manual offsets commiting
-- Consumers must use corresponding deserializers 
+- Consumers must use corresponding deserializers to correctly read messages produced by producers
+
+### Consumer parameters overview
+- [Consumer Configs](https://kafka.apache.org/34/configuration/consumer-configs/)
+- **key.deserializer** - Deserializer class for key that implements the org.apache.kafka.common.serialization.Deserializer interface.
+- **value.deserializer** - Deserializer class for value that implements the org.apache.kafka.common.serialization.Deserializer interface.
+- **bootstrap.servers** - A list of host/port pairs to use for establishing the initial connection to the Kafka cluster.
+- **fetch.min.bytes** - The minimum amount of data the server should return for a fetch request. 
+- **group.id** - A unique string that identifies the consumer group this consumer belongs to.
+- **heartbeat.interval.ms** - The expected time between heartbeats to the consumer coordinator when using Kafka's group management facilities.The value must be set lower than session.timeout.ms, but typically should be set no higher than 1/3 of that value. 
+- **max.partition.fetch.bytes** - The maximum amount of data per-partition the server will return. 
+- **session.timeout.ms** - The timeout used to detect client failures when using Kafka's group management facility. 
+- SSL params: ssl.key.password, ssl.keystore.key, ssl.keystore.location, ssl.keystore.password
