@@ -918,3 +918,30 @@ C:\kafka> .\bin\windows\kafka-console-consumer.bat --bootstrap-server localhost:
 - **ssl.truststore.password** - The password for the trust store file. 
 - batch.size - is used to combine records into the fewer requests increasing throughput but may introduce additional latency. Batching is applied to the messages that are sent to the same partition.
 - client.id - is used to add the custom name for the producer
+
+### Modifying Serializer type
+
+```
+props.put("key.serializer", "org.apache.kafka.common.serialization.IntegerSerializer");
+```
+
+### Producing meaningful messages with delay
+- Create a new topic
+```
+C:\kafka> .\bin\windows\kafka-topics.bat --bootstrap-server localhost:9092, localhost:9093, localhost:9094 --create --replication-factor 3 --partitions 5 --topic strings
+``` 
+
+- Restart a consumer
+
+```
+.\bin\windows\kafka-console-consumer.bat --bootstrap-server localhost:9092,localhost:9093,localhost:9094 --topic strings
+```
+
+```java
+  for (int i = 0; i < numOfRecords; i++) {
+                String message = String.format("Producer %s has sent message %s at %s", clientId,i, new Date());
+                System.out.println(message);
+                producer.send(new ProducerRecord<>(topic, Integer.toString(i), message));
+                Thread.sleep(300);
+            }
+```
