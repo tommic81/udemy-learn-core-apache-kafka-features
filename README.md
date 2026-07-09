@@ -962,3 +962,22 @@ C:\kafka> .\bin\windows\kafka-topics.bat --bootstrap-server localhost:9092, loca
 - **max.partition.fetch.bytes** - The maximum amount of data per-partition the server will return. 
 - **session.timeout.ms** - The timeout used to detect client failures when using Kafka's group management facility. 
 - SSL params: **ssl.key.password**, **ssl.keystore.key**, **ssl.keystore.location**, **ssl.keystore.password**, **ssl.truststore.certificates**, **ssl.truststore.location**, **ssl.truststore.password**
+
+### Consumer with Manual Committing
+```
+while (true) {
+	ConsumerRecords<String, String> records = 	consumer.poll(Duration.ofMillis(100));
+	for (ConsumerRecord<String, String> record : records) {
+		buffer.add(record);
+		String message = String.format("offset = %d, key = %s, value = %s, partition = %s%n", record.offset(), record.key(), record.value(), record.partition());
+		System.out.println(message);
+	}
+
+	if (buffer.size() >= minBatchSize) {
+		// Write to file
+		fileWriter.append(buffer.toString());
+		consumer.commitSync();
+		buffer.clear();
+	}
+}
+```
