@@ -982,6 +982,7 @@ while (true) {
 }
 ```
 ### Consumer with Partitions Assignment
+- With "assign" method you manuallu assign consumer to the partitions and even if there are multiple such customers in the same group, all of them will get all messages from the assigned partitions.
 
 ```
 TopicPartition partitions[] = {
