@@ -981,3 +981,22 @@ while (true) {
 	}
 }
 ```
+### Consumer with Partitions Assignment
+
+```
+TopicPartition partitions[] = {
+                new TopicPartition(topic, 2),
+                new TopicPartition(topic,4)
+        };
+
+        KafkaConsumer<String, String> consumer = new KafkaConsumer<>(props);
+
+consumer.assign(Arrays.asList(partitions));  TopicPartition partitions[] = {
+                new TopicPartition(topic, 2),
+                new TopicPartition(topic,4)
+        };
+
+KafkaConsumer<String, String> consumer = new KafkaConsumer<>(props);
+
+consumer.assign(Arrays.asList(partitions));
+```

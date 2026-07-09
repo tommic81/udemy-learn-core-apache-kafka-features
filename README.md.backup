@@ -963,7 +963,7 @@ C:\kafka> .\bin\windows\kafka-topics.bat --bootstrap-server localhost:9092, loca
 - **session.timeout.ms** - The timeout used to detect client failures when using Kafka's group management facility. 
 - SSL params: **ssl.key.password**, **ssl.keystore.key**, **ssl.keystore.location**, **ssl.keystore.password**, **ssl.truststore.certificates**, **ssl.truststore.location**, **ssl.truststore.password**
 
-### Consumer with Manual Commiting
+### Consumer with Manual Committing
 ```
 while (true) {
 	ConsumerRecords<String, String> records = 	consumer.poll(Duration.ofMillis(100));
@@ -981,3 +981,5 @@ while (true) {
 	}
 }
 ```
+### Consumer with Partitions Assignment
+
